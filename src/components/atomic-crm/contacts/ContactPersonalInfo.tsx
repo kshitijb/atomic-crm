@@ -6,11 +6,7 @@ import { TextField } from "@/components/admin/text-field";
 import { EmailField } from "@/components/admin/email-field";
 import { Mail, Phone, Linkedin, Check } from "lucide-react";
 import type { ReactNode } from "react";
-import {
-  contactGender,
-  translateContactGenderLabel,
-  translatePersonalInfoTypeLabel,
-} from "./contactModel";
+import { contactGender, translateContactGenderLabel } from "./contactModel";
 import type { Contact } from "../types";
 
 export const ContactPersonalInfo = () => {
@@ -126,8 +122,6 @@ const PersonalInfoRow = ({
   primary: ReactNode;
   showType?: boolean;
 }) => {
-  const translate = useTranslate();
-
   return (
     <div className="flex flex-row items-center gap-x-2 py-1 min-h-6">
       {icon}
@@ -136,11 +130,9 @@ const PersonalInfoRow = ({
         {showType ? (
           <WithRecord
             render={(row) =>
-              row.type !== "Other" && (
-                <span className="text-muted-foreground">
-                  {translatePersonalInfoTypeLabel(row.type, translate)}
-                </span>
-              )
+              row.type ? (
+                <span className="text-muted-foreground">{row.type}</span>
+              ) : null
             }
           />
         ) : null}
