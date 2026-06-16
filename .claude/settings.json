@@ -1,13 +1,133 @@
 {
+  "enabledPlugins": {
+    "context7@claude-plugins-official": false,
+    "playwright@claude-plugins-official": false,
+    "security-guidance@claude-plugins-official": false,
+    "supabase@claude-plugins-official": false,
+    "typescript-lsp@claude-plugins-official": false,
+    "code-review@claude-plugins-official": false,
+    "commit-commands@claude-plugins-official": false,
+    "frontend-design@claude-plugins-official": false,
+    "superpowers@claude-plugins-official": false,
+    "hookify@claude-plugins-official": false,
+    "ralph-loop@claude-plugins-official": false
+  },
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "skillListingMaxDescChars": 512,
+  "permissions": {
+    "allow": []
+  },
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  },
   "hooks": {
-    "PostToolUse": [
+    "PreToolUse": [
       {
-        "matcher": "Edit|Write|NotebookEdit",
+        "matcher": "Bash|Read|Grep|Glob|SendMessage",
         "hooks": [
           {
             "type": "command",
-            "command": "bash .claude/hooks/format-file.sh",
-            "timeout": 30
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/member-idle-gate.mjs"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/bash-guard.mjs"
+          },
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/circuit-breaker.mjs"
+          },
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/block-orchestrator-merge.mjs"
+          },
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/restrict-documentator-bash.mjs"
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/restrict-documentator-write.mjs"
+          },
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/block-migration-writes.mjs"
+          }
+        ]
+      },
+      {
+        "matcher": "SendMessage",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/block-premature-shutdowns.mjs"
+          },
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/validate-before-review.mjs",
+            "timeout": 900,
+            "statusMessage": "Validating before review/merge..."
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "TeamDelete",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/teamdelete-cleanup.mjs"
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "matcher": "simple-developer|developer",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/setup-worktree.mjs",
+            "timeout": 60,
+            "statusMessage": "Setting up worktree..."
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "merger",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/cleanup-worktree.mjs",
+            "timeout": 30,
+            "statusMessage": "Cleaning up worktree..."
+          }
+        ]
+      },
+      {
+        "matcher": "simple-developer",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/validate-on-stop.mjs",
+            "timeout": 900,
+            "statusMessage": "Running validation (prettier, typecheck, unit, e2e)..."
           }
         ]
       }
