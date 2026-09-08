@@ -357,6 +357,14 @@ export const englishCrmMessages = {
         add: "Add tag",
         create: "Create new tag",
       },
+      picker: {
+        search: "Search tags…",
+        load_more: "Load more",
+        no_results: "No matching tags",
+        empty: "No more tags to add",
+        error: "Could not load tags. Please try again.",
+        retry: "Retry",
+      },
       dialog: {
         color: "Color",
         create_title: "Create a new tag",

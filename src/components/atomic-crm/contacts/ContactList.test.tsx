@@ -87,7 +87,7 @@ describe("ContactList", () => {
     await checkboxes[1].click();
 
     await screen.getByRole("button", { name: /^tag$/i }).click();
-    await screen.getByRole("button", { name: "VIP" }).click();
+    await screen.getByRole("option", { name: "VIP" }).click();
 
     await expect
       .element(screen.getByText("Tag added to 1 contact"))

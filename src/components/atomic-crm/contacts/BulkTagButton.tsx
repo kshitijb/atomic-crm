@@ -1,4 +1,4 @@
-import { Plus, Tag as TagIcon } from "lucide-react";
+import { Tag as TagIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import {
   useGetMany,
@@ -9,7 +9,6 @@ import {
   useUpdate,
 } from "ra-core";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -20,7 +19,7 @@ import {
 
 import { TagForm } from "../tags/TagForm";
 import { useCreateTag } from "../tags/useCreateTag";
-import { useTags } from "../tags/useTags";
+import { TagPicker } from "../tags/TagPicker";
 import type { Contact, Tag } from "../types";
 
 type BulkTagDialogMode = "select" | "create";
@@ -44,9 +43,6 @@ export function BulkTagButton() {
       { ids: selectedIds },
       { enabled: open && selectedIds.length > 0 },
     );
-  const { data: tags = [], isPending: isPendingTags } = useTags({
-    enabled: open,
-  });
 
   const closeDialog = useCallback(() => {
     setOpen(false);
@@ -62,7 +58,7 @@ export function BulkTagButton() {
   const applyTagToSelection = useCallback(
     async (tag: Tag) => {
       const contactsToUpdate = selectedContacts.filter(
-        (contact) => !contact.tags.includes(tag.id),
+        (contact) => !contact.tags?.includes(tag.id),
       );
 
       setIsApplying(true);
@@ -111,7 +107,7 @@ export function BulkTagButton() {
     return null;
   }
 
-  const isBusy = isApplying || isPendingContacts || isPendingTags;
+  const isBusy = isApplying || isPendingContacts;
 
   return (
     <>
@@ -146,48 +142,16 @@ export function BulkTagButton() {
                 </DialogDescription>
               </DialogHeader>
 
-              <div className="flex flex-col space-y-2 items-start">
-                {isPendingTags ? (
-                  <p className="text-sm text-muted-foreground">
-                    {translate("crm.common.loading")}
-                  </p>
-                ) : tags.length > 0 ? (
-                  tags.map((tag) => (
-                    <Button
-                      key={tag.id}
-                      type="button"
-                      variant="ghost"
-                      disabled={isBusy}
-                      className="px-0 py-0 hover:bg-default dark:hover:bg-default mb-0"
-                      onClick={() => applyTagToSelection(tag)}
-                    >
-                      <Badge
-                        variant="secondary"
-                        className="font-normal text-black cursor-pointer hover:opacity-80 transition-opacity"
-                        style={{ backgroundColor: tag.color }}
-                      >
-                        {tag.name}
-                      </Badge>
-                    </Button>
-                  ))
-                ) : (
-                  <p className="text-sm text-muted-foreground">
-                    {translate("resources.contacts.bulk_tag.empty")}
-                  </p>
+              <TagPicker
+                disabled={isBusy}
+                excludedIds={selectedContacts[0]?.tags?.filter((id) =>
+                  selectedContacts.every((contact) =>
+                    contact.tags?.includes(id),
+                  ),
                 )}
-              </div>
-
-              <div className="flex justify-start">
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={isBusy}
-                  onClick={() => setMode("create")}
-                >
-                  <Plus />
-                  {translate("resources.tags.action.create")}
-                </Button>
-              </div>
+                onSelect={applyTagToSelection}
+                onCreate={() => setMode("create")}
+              />
             </>
           ) : (
             <>

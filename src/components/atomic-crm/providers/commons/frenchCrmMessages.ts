@@ -363,6 +363,14 @@ export const frenchCrmMessages = {
         add: "Ajouter une étiquette",
         create: "Créer une nouvelle étiquette",
       },
+      picker: {
+        search: "Rechercher des étiquettes…",
+        load_more: "Afficher plus",
+        no_results: "Aucune étiquette correspondante",
+        empty: "Aucune autre étiquette à ajouter",
+        error: "Impossible de charger les étiquettes. Veuillez réessayer.",
+        retry: "Réessayer",
+      },
       dialog: {
         color: "Couleur",
         create_title: "Créer une nouvelle étiquette",
