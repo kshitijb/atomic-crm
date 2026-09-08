@@ -146,16 +146,21 @@ export const frenchCrmMessages = {
         action: "Étiqueter",
         back: "Retour aux étiquettes",
         create_description:
-          "Créez une nouvelle étiquette et appliquez-la aux contacts sélectionnés.",
+          "Créez une nouvelle étiquette et ajoutez-la à votre sélection.",
         description:
-          "Choisissez une étiquette existante ou créez-en une pour les contacts sélectionnés.",
+          "Sélectionnez une ou plusieurs étiquettes, puis appliquez-les aux contacts sélectionnés.",
         empty:
           "Aucune étiquette pour le moment. Créez-en une pour étiqueter les contacts sélectionnés.",
-        error: "Impossible d'ajouter l'étiquette aux contacts",
-        noop: "Les contacts sélectionnés ont déjà cette étiquette",
+        error: "Impossible d'ajouter les étiquettes aux contacts",
+        noop: "Les contacts sélectionnés ont déjà ces étiquettes",
         success:
           "Étiquette ajoutée à %{smart_count} contact |||| Étiquette ajoutée à %{smart_count} contacts",
-        title: "Ajouter une étiquette aux contacts",
+        title: "Ajouter des étiquettes aux contacts",
+        apply: "Appliquer les étiquettes (%{count})",
+        selection: "Étiquettes sélectionnées",
+        remove: "Retirer %{name} de la sélection",
+        success_multiple:
+          "Étiquettes ajoutées à %{smart_count} contact |||| Étiquettes ajoutées à %{smart_count} contacts",
       },
       merge: {
         action: "Fusionner avec un autre contact",

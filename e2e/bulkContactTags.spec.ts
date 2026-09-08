@@ -51,6 +51,7 @@ test("user adds a tag to several contacts", async ({
   await page.getByRole("button", { name: "Create new tag" }).click();
   await page.getByLabel("Tag name").fill("Prospect");
   await page.getByRole("button", { name: "Save" }).click();
+  await page.getByRole("button", { name: "Apply tags (1)" }).click();
 
   await dismissToast("Tag added to 2 contacts");
 

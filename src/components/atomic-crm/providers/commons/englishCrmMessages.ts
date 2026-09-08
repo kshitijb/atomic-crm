@@ -141,16 +141,20 @@ export const englishCrmMessages = {
       bulk_tag: {
         action: "Tag",
         back: "Back to tags",
-        create_description:
-          "Create a new tag and apply it to the selected contacts.",
+        create_description: "Create a new tag and add it to your selection.",
         description:
-          "Choose an existing tag or create a new one for the selected contacts.",
+          "Select one or more tags, then apply them to the selected contacts.",
         empty: "No tags yet. Create one to tag the selected contacts.",
-        error: "Failed to add tag to contacts",
-        noop: "Selected contacts already have this tag",
+        error: "Failed to add tags to contacts",
+        noop: "Selected contacts already have these tags",
         success:
           "Tag added to %{smart_count} contact |||| Tag added to %{smart_count} contacts",
-        title: "Add tag to contacts",
+        title: "Add tags to contacts",
+        apply: "Apply tags (%{count})",
+        selection: "Selected tags",
+        remove: "Remove %{name} from selection",
+        success_multiple:
+          "Tags added to %{smart_count} contact |||| Tags added to %{smart_count} contacts",
       },
       merge: {
         action: "Merge with another contact",

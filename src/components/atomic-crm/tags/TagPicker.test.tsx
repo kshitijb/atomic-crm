@@ -198,18 +198,85 @@ function BulkSelection() {
   );
 }
 
-it("searches and applies a bulk tag without duplicating it or replacing other tags", async () => {
-  const { screen, provider, getList } = setup(<BulkSelection />);
+it("selects bulk tags across pages and searches, then applies each contact once without duplicates", async () => {
+  const { screen, provider, getList, update } = setup(<BulkSelection />);
   await screen;
   expect(getList).not.toHaveBeenCalled();
   await page.getByRole("button", { name: "Tag", exact: true }).click();
-  await page.getByRole("combobox").fill("204");
-  await page.getByRole("option", { name: "Tag 204", exact: true }).click();
+  await expect
+    .element(page.getByRole("button", { name: "Apply tags (0)" }))
+    .toBeDisabled();
+  await page.getByRole("checkbox", { name: "Tag 001", exact: true }).click();
+  await page.getByRole("button", { name: "Load more" }).click();
+  await page.getByRole("checkbox", { name: "Tag 030", exact: true }).click();
+  await page.getByRole("searchbox").fill("204");
+  await page.getByRole("checkbox", { name: "Tag 204", exact: true }).click();
+  await expect
+    .element(page.getByRole("checkbox", { name: "Tag 204", exact: true }))
+    .toBeChecked();
+  await page
+    .getByRole("button", { name: "Remove Tag 030 from selection" })
+    .click();
+  await page.getByRole("searchbox").fill("Tag 001");
+  await expect
+    .element(page.getByRole("checkbox", { name: "Tag 001", exact: true }))
+    .toBeChecked();
+  expect(update).not.toHaveBeenCalled();
+  await page.getByRole("button", { name: "Apply tags (2)" }).click();
   await expect
     .poll(async () => (await provider.getOne("contacts", { id: 2 })).data.tags)
-    .toEqual([0, 204]);
+    .toEqual([0, 1, 204]);
   expect((await provider.getOne("contacts", { id: 1 })).data.tags).toEqual([
-    0, 204,
+    0, 204, 1,
+  ]);
+  expect(update).toHaveBeenCalledTimes(2);
+});
+
+it("can toggle bulk tags with the keyboard and cancel without updating contacts", async () => {
+  const { screen, update } = setup(<BulkSelection />);
+  await screen;
+  await page.getByRole("button", { name: "Tag", exact: true }).click();
+  await page.getByRole("searchbox").fill("204");
+  await expect
+    .element(page.getByRole("checkbox", { name: "Tag 204", exact: true }))
+    .toBeVisible();
+  await userEvent.keyboard("{Tab} ");
+  await expect
+    .element(page.getByRole("checkbox", { name: "Tag 204", exact: true }))
+    .toBeChecked();
+  await userEvent.keyboard(" ");
+  await expect
+    .element(page.getByRole("button", { name: "Apply tags (0)" }))
+    .toBeDisabled();
+  await page.getByRole("checkbox", { name: "Tag 204", exact: true }).click();
+  await page.getByRole("button", { name: "Cancel", exact: true }).click();
+  expect(update).not.toHaveBeenCalled();
+  await page.getByRole("button", { name: "Tag", exact: true }).click();
+  await expect
+    .element(page.getByRole("button", { name: "Apply tags (0)" }))
+    .toBeDisabled();
+});
+
+it("adds a newly created tag to the pending bulk selection before applying", async () => {
+  const { screen, provider, update } = setup(<BulkSelection />);
+  await screen;
+  await page.getByRole("button", { name: "Tag", exact: true }).click();
+  await page.getByRole("checkbox", { name: "Tag 001", exact: true }).click();
+  await page.getByRole("button", { name: "Create new tag" }).click();
+  await page.getByRole("textbox", { name: "Tag name" }).fill("New customer");
+  await page.getByRole("button", { name: "Save" }).click();
+  await expect
+    .element(
+      page.getByRole("button", { name: "Remove New customer from selection" }),
+    )
+    .toBeVisible();
+  expect(update).not.toHaveBeenCalled();
+  await page.getByRole("button", { name: "Apply tags (2)" }).click();
+  await expect
+    .poll(async () => (await provider.getOne("contacts", { id: 2 })).data.tags)
+    .toEqual([0, 1, 205]);
+  expect((await provider.getOne("contacts", { id: 1 })).data.tags).toEqual([
+    0, 204, 1, 205,
   ]);
 });
 

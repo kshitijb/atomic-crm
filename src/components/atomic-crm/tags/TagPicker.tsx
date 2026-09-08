@@ -3,6 +3,8 @@ import { useTranslate } from "ra-core";
 import { useEffect, useRef, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import {
   Command,
   CommandInput,
@@ -14,6 +16,7 @@ import { useTags } from "./useTags";
 
 type TagPickerProps = {
   excludedIds?: number[];
+  selectedTagIds?: number[];
   disabled?: boolean;
   onSelect(tag: Tag): void;
   onCreate(): void;
@@ -21,6 +24,7 @@ type TagPickerProps = {
 
 export function TagPicker({
   excludedIds,
+  selectedTagIds,
   disabled,
   onSelect,
   onCreate,
@@ -51,55 +55,107 @@ export function TagPicker({
   const tags = data?.pages.flatMap((page) => page.data) ?? [];
   const isSearching = search.trim() !== debouncedSearch || isPending;
 
+  const results = (
+    <>
+      {isSearching ? (
+        <p role="status" className="p-3 text-sm text-muted-foreground">
+          {translate("crm.common.loading")}
+        </p>
+      ) : (
+        tags.map((tag) =>
+          selectedTagIds ? (
+            <div
+              key={tag.id}
+              className="flex items-center gap-2 rounded-sm px-2 py-2 hover:bg-accent cursor-pointer"
+              onClick={() => onSelect(tag)}
+            >
+              <Checkbox
+                checked={selectedTagIds.includes(tag.id)}
+                disabled={disabled}
+                aria-label={tag.name}
+                onClick={(event) => event.stopPropagation()}
+                onCheckedChange={() => onSelect(tag)}
+              />
+              <Badge
+                variant="secondary"
+                className="text-sm font-normal text-black whitespace-normal break-words"
+                style={{ backgroundColor: tag.color }}
+              >
+                {tag.name}
+              </Badge>
+            </div>
+          ) : (
+            <CommandItem
+              key={tag.id}
+              value={String(tag.id)}
+              disabled={disabled}
+              onSelect={() => onSelect(tag)}
+            >
+              <Badge
+                variant="secondary"
+                className="text-sm font-normal text-black whitespace-normal break-words"
+                style={{ backgroundColor: tag.color }}
+              >
+                {tag.name}
+              </Badge>
+            </CommandItem>
+          ),
+        )
+      )}
+      {!isSearching && !error && tags.length === 0 && (
+        <p role="status" className="p-3 text-sm text-muted-foreground">
+          {translate(
+            debouncedSearch
+              ? "resources.tags.picker.no_results"
+              : "resources.tags.picker.empty",
+          )}
+        </p>
+      )}
+    </>
+  );
+
   return (
     <div className="min-w-0">
-      <Command shouldFilter={false}>
-        <CommandInput
-          autoFocus
-          aria-label={translate("resources.tags.picker.search")}
-          placeholder={translate("resources.tags.picker.search")}
-          value={search}
-          onValueChange={setSearch}
-          disabled={disabled}
-        />
-        <CommandList
-          ref={listRef}
-          className="max-h-60"
-          aria-busy={isSearching || isFetching}
-        >
-          {isSearching ? (
-            <p role="status" className="p-3 text-sm text-muted-foreground">
-              {translate("crm.common.loading")}
-            </p>
-          ) : (
-            tags.map((tag) => (
-              <CommandItem
-                key={tag.id}
-                value={String(tag.id)}
-                disabled={disabled}
-                onSelect={() => onSelect(tag)}
-              >
-                <Badge
-                  variant="secondary"
-                  className="text-sm font-normal text-black whitespace-normal break-words"
-                  style={{ backgroundColor: tag.color }}
-                >
-                  {tag.name}
-                </Badge>
-              </CommandItem>
-            ))
-          )}
-          {!isSearching && !error && tags.length === 0 && (
-            <p role="status" className="p-3 text-sm text-muted-foreground">
-              {translate(
-                debouncedSearch
-                  ? "resources.tags.picker.no_results"
-                  : "resources.tags.picker.empty",
-              )}
-            </p>
-          )}
-        </CommandList>
-      </Command>
+      {selectedTagIds ? (
+        <>
+          <Input
+            type="search"
+            autoFocus
+            aria-label={translate("resources.tags.picker.search")}
+            placeholder={translate("resources.tags.picker.search")}
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            disabled={disabled}
+          />
+          <div
+            ref={listRef}
+            role="group"
+            aria-label={translate("resources.tags.name", { smart_count: 2 })}
+            className="max-h-60 overflow-y-auto mt-2"
+            aria-busy={isSearching || isFetching}
+          >
+            {results}
+          </div>
+        </>
+      ) : (
+        <Command shouldFilter={false}>
+          <CommandInput
+            autoFocus
+            aria-label={translate("resources.tags.picker.search")}
+            placeholder={translate("resources.tags.picker.search")}
+            value={search}
+            onValueChange={setSearch}
+            disabled={disabled}
+          />
+          <CommandList
+            ref={listRef}
+            className="max-h-60"
+            aria-busy={isSearching || isFetching}
+          >
+            {results}
+          </CommandList>
+        </Command>
+      )}
       {error && !isSearching && (
         <div className="p-2">
           <p role="alert" className="text-sm text-destructive">

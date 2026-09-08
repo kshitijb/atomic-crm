@@ -87,7 +87,8 @@ describe("ContactList", () => {
     await checkboxes[1].click();
 
     await screen.getByRole("button", { name: /^tag$/i }).click();
-    await screen.getByRole("option", { name: "VIP" }).click();
+    await screen.getByRole("checkbox", { name: "VIP" }).click();
+    await screen.getByRole("button", { name: "Apply tags (1)" }).click();
 
     await expect
       .element(screen.getByText("Tag added to 1 contact"))
@@ -115,14 +116,13 @@ describe("ContactList", () => {
 
     await expect
       .element(
-        screen.getByText(
-          "Create a new tag and apply it to the selected contacts.",
-        ),
+        screen.getByText("Create a new tag and add it to your selection."),
       )
       .toBeVisible();
 
     await screen.getByLabelText("Tag name").fill("Prospect");
     await screen.getByRole("button", { name: /^Save$/ }).click();
+    await screen.getByRole("button", { name: "Apply tags (1)" }).click();
 
     await expect
       .element(screen.getByText("Tag added to 2 contacts"))
