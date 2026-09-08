@@ -11,6 +11,7 @@ import fakeRestDataProvider from "ra-data-fakerest";
 import type {
   Company,
   Contact,
+  ContactCompany,
   ContactNote,
   Deal,
   DealNote,
@@ -19,6 +20,7 @@ import type {
   SignUpData,
   Task,
 } from "../../types";
+import { normalizeContactCompanyAffiliations } from "../../contacts/contactModel";
 import type { ConfigurationContextValue } from "../../root/ConfigurationContext";
 import { getActivityLog } from "../commons/activity";
 import { getCompanyAvatar } from "../commons/getCompanyAvatar";
@@ -167,8 +169,119 @@ export const createDataProvider = ({
     });
   };
 
+  const getContactCompanyAffiliations = async (contactId: Identifier) => {
+    const { data } = await baseDataProvider.getList<ContactCompany>(
+      "contact_companies",
+      {
+        filter: { contact_id: contactId },
+        pagination: { page: 1, perPage: 1000 },
+        sort: { field: "start_date", order: "ASC" },
+      },
+    );
+    return data;
+  };
+
+  const enrichContact = async (contact: Contact): Promise<Contact> => {
+    const affiliations = await getContactCompanyAffiliations(contact.id);
+    return normalizeContactCompanyAffiliations({
+      ...contact,
+      company_affiliations:
+        affiliations.length > 0 ? affiliations : contact.company_affiliations,
+    });
+  };
+
+  const syncContactCompanies = async (
+    contactId: Identifier,
+    affiliations: ContactCompany[],
+  ) => {
+    const { data: existing } = await baseDataProvider.getList<ContactCompany>(
+      "contact_companies",
+      {
+        filter: { contact_id: contactId },
+        pagination: { page: 1, perPage: 1000 },
+        sort: { field: "id", order: "ASC" },
+      },
+    );
+
+    await Promise.all(
+      existing.map((affiliation) =>
+        baseDataProvider.delete("contact_companies", {
+          id: affiliation.id,
+          previousData: affiliation,
+        }),
+      ),
+    );
+    await Promise.all(
+      affiliations.map((affiliation) =>
+        baseDataProvider.create("contact_companies", {
+          data: {
+            contact_id: contactId,
+            company_id: affiliation.company_id,
+            start_date: affiliation.start_date || null,
+            end_date: affiliation.end_date || null,
+          },
+        }),
+      ),
+    );
+  };
+
   const dataProviderWithCustomMethod: CrmDataProvider = {
     ...baseDataProvider,
+    async create(resource: string, params: any) {
+      if (resource !== "contacts") {
+        return baseDataProvider.create(resource, params);
+      }
+
+      const { company_affiliations = [], ...contactData } = params.data;
+      const result = await baseDataProvider.create(resource, {
+        ...params,
+        data: contactData,
+      });
+      await syncContactCompanies(result.data.id, company_affiliations);
+      return {
+        ...result,
+        data: { ...result.data, company_affiliations },
+      };
+    },
+    async update(resource: string, params: any) {
+      if (resource !== "contacts") {
+        return baseDataProvider.update(resource, params);
+      }
+
+      const hasAffiliations = "company_affiliations" in params.data;
+      const { company_affiliations, ...contactData } = params.data;
+      const result = await baseDataProvider.update(resource, {
+        ...params,
+        data: contactData,
+      });
+      if (hasAffiliations) {
+        await syncContactCompanies(result.data.id, company_affiliations ?? []);
+      }
+      return {
+        ...result,
+        data: {
+          ...result.data,
+          ...(hasAffiliations ? { company_affiliations } : {}),
+        },
+      };
+    },
+    async delete(resource: string, params: any) {
+      if (resource !== "contacts") {
+        return baseDataProvider.delete(resource, params);
+      }
+
+      const result = await baseDataProvider.delete(resource, params);
+      const affiliations = await getContactCompanyAffiliations(params.id);
+      await Promise.all(
+        affiliations.map((affiliation) =>
+          baseDataProvider.delete("contact_companies", {
+            id: affiliation.id,
+            previousData: affiliation,
+          }),
+        ),
+      );
+      return result;
+    },
     async getList(resource: string, params: any) {
       if (resource === "activity_log") {
         const { filter = {}, pagination } = params;
@@ -181,7 +294,21 @@ export const createDataProvider = ({
         const start = (page - 1) * perPage;
         return { data: all.slice(start, start + perPage), total: all.length };
       }
-      return baseDataProvider.getList(resource, params);
+      const result = await baseDataProvider.getList(resource, params);
+      if (resource === "contacts") {
+        return {
+          ...result,
+          data: await Promise.all(result.data.map(enrichContact)),
+        };
+      }
+      return result;
+    },
+    async getOne(resource: string, params: any) {
+      const result = await baseDataProvider.getOne(resource, params);
+      if (resource === "contacts") {
+        return { ...result, data: await enrichContact(result.data) };
+      }
+      return result;
     },
     unarchiveDeal: async (deal: Deal) => {
       // get all deals where stage is the same as the deal to unarchive
@@ -397,25 +524,25 @@ export const createDataProvider = ({
 
           await Promise.all([
             dataProvider.updateMany("companies", {
-              ids: companies.data.map((company) => company.id),
+              ids: companies.data.map((company: Company) => company.id),
               data: {
                 sales_id: newSaleId,
               },
             }),
             dataProvider.updateMany("contacts", {
-              ids: contacts.data.map((company) => company.id),
+              ids: contacts.data.map((company: Contact) => company.id),
               data: {
                 sales_id: newSaleId,
               },
             }),
             dataProvider.updateMany("contact_notes", {
-              ids: contactNotes.data.map((company) => company.id),
+              ids: contactNotes.data.map((company: ContactNote) => company.id),
               data: {
                 sales_id: newSaleId,
               },
             }),
             dataProvider.updateMany("deals", {
-              ids: deals.data.map((company) => company.id),
+              ids: deals.data.map((company: Deal) => company.id),
               data: {
                 sales_id: newSaleId,
               },

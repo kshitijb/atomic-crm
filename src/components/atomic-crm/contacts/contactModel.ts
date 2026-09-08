@@ -1,6 +1,6 @@
 import { Mars, NonBinary, Venus } from "lucide-react";
 
-import type { Company, Contact, ContactGender } from "../types";
+import type { Company, Contact, ContactCompany, ContactGender } from "../types";
 
 export const defaultEmailJsonb = [{ email: null, type: null }];
 export const defaultPhoneJsonb = [{ number: null, type: null }];
@@ -10,10 +10,42 @@ const cleanContactArrayFields = (data: Contact) => {
     data.email_jsonb?.filter((e) => e.email != null) || [];
   const cleanedPhoneJsonb =
     data.phone_jsonb?.filter((p) => p.number != null) || [];
+  const companyAffiliations = data.company_affiliations?.filter(
+    (affiliation) => affiliation.company_id != null,
+  );
+
   return {
     ...data,
     phone_jsonb: cleanedPhoneJsonb.length > 0 ? cleanedPhoneJsonb : null,
     email_jsonb: cleanedEmailJsonb.length > 0 ? cleanedEmailJsonb : null,
+    // Keep company_id as the legacy primary-company field used by existing
+    // lists, filters, activity, and integrations.
+    company_id:
+      companyAffiliations != null
+        ? (companyAffiliations[0]?.company_id ?? null)
+        : data.company_id,
+    company_affiliations: companyAffiliations,
+  };
+};
+
+export const normalizeContactCompanyAffiliations = (
+  contact: Contact,
+): Contact => {
+  if (contact.company_affiliations?.length || contact.company_id == null) {
+    return contact;
+  }
+
+  return {
+    ...contact,
+    company_affiliations: [
+      {
+        id: `legacy-company-${contact.company_id}`,
+        contact_id: contact.id,
+        company_id: contact.company_id,
+        start_date: null,
+        end_date: null,
+      } satisfies ContactCompany,
+    ],
   };
 };
 

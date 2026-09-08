@@ -32,6 +32,7 @@ import type { Contact } from "../types";
 import { Avatar } from "./Avatar";
 import { ContactAside } from "./ContactAside";
 import { MobileBackButton } from "../misc/MobileBackButton";
+import { ContactCompanies } from "./ContactCompanies";
 
 export const ContactShow = (props: ShowBaseProps = {}) => {
   const isMobile = useIsMobile();
@@ -131,6 +132,7 @@ const ContactShowContentMobile = () => {
               </ReferenceField>
             </div>
           </div>
+          <ContactCompanies />
         </div>
 
         <Tabs defaultValue="notes" className="w-full">
@@ -280,6 +282,7 @@ const ContactShowContent = () => {
                 </ReferenceField>
               </div>
             </div>
+            <ContactCompanies />
             <InfiniteListBase
               resource="contact_notes"
               filter={{ contact_id: record.id }}

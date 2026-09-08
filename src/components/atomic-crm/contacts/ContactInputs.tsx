@@ -5,6 +5,7 @@ import {
   useTranslate,
   useUpdate,
   useNotify,
+  useSimpleFormIteratorItem,
 } from "ra-core";
 import type { FocusEvent, ClipboardEventHandler } from "react";
 import { useFormContext } from "react-hook-form";
@@ -86,11 +87,81 @@ const ContactPositionInputs = () => {
         {translate("resources.contacts.field_categories.position")}
       </h6>
       <TextInput source="title" helperText={false} />
-      <ReferenceInput source="company_id" reference="companies" perPage={10}>
-        <AutocompleteCompanyInput label="resources.contacts.fields.company_id" />
-      </ReferenceInput>
+      <ArrayInput
+        source="company_affiliations"
+        helperText={false}
+        validate={validateCompanyAffiliations}
+      >
+        <SimpleFormIterator
+          disableReordering
+          className="[&>ul>li]:border-b-0 [&>ul>li]:pb-0"
+        >
+          <ContactCompanyInputs />
+        </SimpleFormIterator>
+      </ArrayInput>
     </div>
   );
+};
+
+const ContactCompanyInputs = () => {
+  const translate = useTranslate();
+  const { index } = useSimpleFormIteratorItem();
+
+  const validateEndDate = (value: string | null, values: Contact) => {
+    const startDate = values.company_affiliations?.[index]?.start_date;
+    if (startDate && value && startDate > value) {
+      return translate("resources.contacts.validation.company_date_order");
+    }
+    return undefined;
+  };
+
+  return (
+    <div className="flex flex-col gap-2 rounded-md border p-3">
+      <ReferenceInput source="company_id" reference="companies" perPage={10}>
+        <AutocompleteCompanyInput
+          label="resources.contacts.fields.company_id"
+          validate={required()}
+        />
+      </ReferenceInput>
+      <div className="grid grid-cols-2 gap-2">
+        <TextInput
+          source="start_date"
+          type="month"
+          label="resources.contacts.fields.start_date"
+          helperText={false}
+          format={formatMonthInput}
+          parse={parseMonthInput}
+        />
+        <TextInput
+          source="end_date"
+          type="month"
+          label="resources.contacts.fields.end_date"
+          helperText={false}
+          format={formatMonthInput}
+          parse={parseMonthInput}
+          validate={validateEndDate}
+        />
+      </div>
+    </div>
+  );
+};
+
+const formatMonthInput = (value?: string | null) => value?.slice(0, 7) ?? "";
+const parseMonthInput = (value?: string | null) =>
+  value ? `${value}-01` : null;
+
+export const validateCompanyAffiliations = (
+  value?: Contact["company_affiliations"],
+) => {
+  if (!value) return undefined;
+  return value.some(
+    (affiliation) =>
+      affiliation.start_date &&
+      affiliation.end_date &&
+      affiliation.start_date > affiliation.end_date,
+  )
+    ? "resources.contacts.validation.company_date_order"
+    : undefined;
 };
 
 const ContactPersonalInformationInputs = () => {

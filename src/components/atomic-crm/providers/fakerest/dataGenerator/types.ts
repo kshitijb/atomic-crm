@@ -1,6 +1,7 @@
 import type {
   Company,
   Contact,
+  ContactCompany,
   ContactNote,
   Deal,
   DealNote,
@@ -13,6 +14,7 @@ import type { ConfigurationContextValue } from "../../../root/ConfigurationConte
 export interface Db {
   companies: Company[];
   contacts: Contact[];
+  contact_companies: ContactCompany[];
   contact_notes: ContactNote[];
   deals: Deal[];
   deal_notes: DealNote[];

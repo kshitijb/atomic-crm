@@ -74,6 +74,10 @@ grant all on table public.contacts to anon;
 grant all on table public.contacts to authenticated;
 grant all on table public.contacts to service_role;
 
+grant all on table public.contact_companies to anon;
+grant all on table public.contact_companies to authenticated;
+grant all on table public.contact_companies to service_role;
+
 grant all on table public.contact_notes to anon;
 grant all on table public.contact_notes to authenticated;
 grant all on table public.contact_notes to service_role;
@@ -135,6 +139,10 @@ grant all on sequence public."contactNotes_id_seq" to service_role;
 grant all on sequence public.contacts_id_seq to anon;
 grant all on sequence public.contacts_id_seq to authenticated;
 grant all on sequence public.contacts_id_seq to service_role;
+
+grant all on sequence public.contact_companies_id_seq to anon;
+grant all on sequence public.contact_companies_id_seq to authenticated;
+grant all on sequence public.contact_companies_id_seq to service_role;
 
 grant all on sequence public."dealNotes_id_seq" to anon;
 grant all on sequence public."dealNotes_id_seq" to authenticated;

@@ -77,6 +77,9 @@ export const frenchCrmMessages = {
         last_seen: "Dernière activité",
         title: "Titre",
         company_id: "Entreprise",
+        company_affiliations: "Entreprises",
+        start_date: "Mois de début",
+        end_date: "Mois de fin",
         email_jsonb: "Adresses e-mail",
         email: "E-mail",
         phone_jsonb: "Numéros de téléphone",
@@ -104,6 +107,10 @@ export const frenchCrmMessages = {
       },
       position_at: "%{title} chez",
       position_at_company: "%{title} chez %{company}",
+      validation: {
+        company_date_order:
+          "Le mois de début doit être antérieur ou égal au mois de fin",
+      },
       empty: {
         description: "Il semble que votre liste de contacts soit vide.",
         title: "Aucun contact trouvé",

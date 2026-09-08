@@ -15,6 +15,13 @@ export default (): Db => {
   db.tags = generateTags(db);
   db.companies = generateCompanies(db);
   db.contacts = generateContacts(db);
+  db.contact_companies = db.contacts.map((contact, index) => ({
+    id: index,
+    contact_id: contact.id,
+    company_id: contact.company_id!,
+    start_date: null,
+    end_date: null,
+  }));
   db.contact_notes = generateContactNotes(db);
   db.deals = generateDeals(db);
   db.deal_notes = generateDealNotes(db);

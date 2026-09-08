@@ -74,6 +74,9 @@ export const englishCrmMessages = {
         last_seen: "Last seen",
         title: "Title",
         company_id: "Company",
+        company_affiliations: "Companies",
+        start_date: "Start month",
+        end_date: "End month",
         email_jsonb: "Email addresses",
         email: "Email",
         phone_jsonb: "Phone numbers",
@@ -101,6 +104,9 @@ export const englishCrmMessages = {
       },
       position_at: "%{title} at",
       position_at_company: "%{title} at %{company}",
+      validation: {
+        company_date_order: "Start month must be before or equal to end month",
+      },
       empty: {
         description: "It seems your contact list is empty.",
         title: "No contacts found",

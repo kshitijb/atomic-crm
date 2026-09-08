@@ -57,6 +57,14 @@ interface ContactNotesTable {
   attachments: unknown[] | null; // JSONB array
 }
 
+interface ContactCompaniesTable {
+  id: Generated<number>;
+  contact_id: number;
+  company_id: number;
+  start_date: Date | null;
+  end_date: Date | null;
+}
+
 interface DealsTable {
   id: Generated<number>;
   name: string;
@@ -78,6 +86,7 @@ interface Database {
   contacts: ContactsTable;
   tasks: TasksTable;
   contact_notes: ContactNotesTable;
+  contact_companies: ContactCompaniesTable;
   deals: DealsTable;
 }
 

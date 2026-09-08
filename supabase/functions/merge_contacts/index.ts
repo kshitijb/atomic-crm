@@ -119,6 +119,36 @@ async function mergeContacts(
         .where("contact_id", "=", loserId)
         .execute();
 
+      // Merge company affiliations, keeping the winner's dates when both
+      // contacts are linked to the same company.
+      const loserAffiliations = await trx
+        .selectFrom("contact_companies")
+        .selectAll()
+        .where("contact_id", "=", loserId)
+        .execute();
+
+      for (const affiliation of loserAffiliations) {
+        const winnerAffiliation = await trx
+          .selectFrom("contact_companies")
+          .select("id")
+          .where("contact_id", "=", winnerId)
+          .where("company_id", "=", affiliation.company_id)
+          .executeTakeFirst();
+
+        if (winnerAffiliation) {
+          await trx
+            .deleteFrom("contact_companies")
+            .where("id", "=", affiliation.id)
+            .execute();
+        } else {
+          await trx
+            .updateTable("contact_companies")
+            .set({ contact_id: winnerId })
+            .where("id", "=", affiliation.id)
+            .execute();
+        }
+      }
+
       // 4. Update deals - replace loserId with winnerId in contact_ids array
       const deals = await trx
         .selectFrom("deals")

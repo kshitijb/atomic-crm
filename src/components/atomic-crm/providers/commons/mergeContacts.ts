@@ -1,6 +1,12 @@
 import type { Identifier, DataProvider } from "ra-core";
 
-import type { Contact, Task, Deal, ContactNote } from "../../types";
+import type {
+  Contact,
+  Task,
+  Deal,
+  ContactNote,
+  ContactCompany,
+} from "../../types";
 
 /**
  * Merge one contact (loser) into another contact (winner).
@@ -107,6 +113,12 @@ export const mergeContacts = async (
     (phone) => phone.number,
   );
 
+  const mergedCompanyAffiliations = mergeObjectArraysUnique<ContactCompany>(
+    winnerContact.company_affiliations || [],
+    loserContact.company_affiliations || [],
+    (affiliation) => String(affiliation.company_id),
+  );
+
   const winnerUpdate = dataProvider.update<Contact>("contacts", {
     id: winnerId,
     data: {
@@ -119,6 +131,7 @@ export const mergeContacts = async (
       last_name: winnerContact.last_name ?? loserContact.last_name,
       title: winnerContact.title ?? loserContact.title,
       company_id: winnerContact.company_id ?? loserContact.company_id,
+      company_affiliations: mergedCompanyAffiliations,
       email_jsonb: mergedEmails,
       phone_jsonb: mergedPhones,
       linkedin_url: winnerContact.linkedin_url || loserContact.linkedin_url,

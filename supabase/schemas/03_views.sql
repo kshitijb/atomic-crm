@@ -97,6 +97,11 @@ select
 from public.companies c
     left join public.deals d on c.id = d.company_id
     left join public.contacts co on c.id = co.company_id
+        or exists (
+            select 1
+            from public.contact_companies cc
+            where cc.contact_id = co.id and cc.company_id = c.id
+        )
 group by c.id;
 
 create or replace view public.contacts_summary with (security_invoker = on) as
@@ -118,6 +123,18 @@ select
     co.linkedin_url,
     co.email_jsonb,
     co.phone_jsonb,
+    coalesce(
+        jsonb_agg(
+            jsonb_build_object(
+                'id', cc.id,
+                'contact_id', cc.contact_id,
+                'company_id', cc.company_id,
+                'start_date', cc.start_date,
+                'end_date', cc.end_date
+            ) order by cc.start_date nulls last, cc.id
+        ) filter (where cc.id is not null),
+        '[]'::jsonb
+    ) as company_affiliations,
     (jsonb_path_query_array(co.email_jsonb, '$[*]."email"'))::text as email_fts,
     (jsonb_path_query_array(co.phone_jsonb, '$[*]."number"'))::text as phone_fts,
     c.name as company_name,
@@ -125,6 +142,7 @@ select
 from public.contacts co
     left join public.tasks t on co.id = t.contact_id
     left join public.companies c on co.company_id = c.id
+    left join public.contact_companies cc on co.id = cc.contact_id
 group by co.id, c.name;
 
 create or replace view public.init_state with (security_invoker = off) as

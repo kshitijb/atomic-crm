@@ -30,7 +30,7 @@ async function getUser(email: string) {
     return { ...DEFAULT_USER };
   }
 
-  const user = sales.data.find((sale) => sale.email === email);
+  const user = sales.data.find((sale: Sale) => sale.email === email);
   if (!user || user.disabled) {
     return { ...DEFAULT_USER };
   }

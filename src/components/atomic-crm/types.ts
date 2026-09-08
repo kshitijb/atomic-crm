@@ -76,6 +76,14 @@ export type EmailAndType = {
   type: "Work" | "Home" | "Other";
 };
 
+export type ContactCompany = {
+  id: Identifier;
+  contact_id: Identifier;
+  company_id: Identifier;
+  start_date?: string | null;
+  end_date?: string | null;
+};
+
 export type PhoneNumberAndType = {
   number: string;
   type: "Work" | "Home" | "Other";
@@ -86,6 +94,7 @@ export type Contact = {
   last_name: string;
   title: string;
   company_id?: Identifier | null;
+  company_affiliations?: ContactCompany[];
   email_jsonb: EmailAndType[];
   avatar?: Partial<RAFile>;
   linkedin_url?: string | null;

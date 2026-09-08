@@ -281,6 +281,8 @@ DECLARE
   winner_contact contacts%ROWTYPE;
   loser_contact contacts%ROWTYPE;
   deal_record RECORD;
+  affiliation_record RECORD;
+  winner_affiliation_id bigint;
   merged_emails jsonb;
   merged_phones jsonb;
   merged_tags bigint[];
@@ -304,6 +306,29 @@ BEGIN
 
   -- 2. Reassign contact notes from loser to winner
   UPDATE contact_notes SET contact_id = winner_id WHERE contact_id = loser_id;
+
+  -- 2b. Merge company affiliations, keeping the winner's dates when both
+  -- contacts are linked to the same company.
+  FOR affiliation_record IN
+    SELECT id, company_id
+    FROM contact_companies
+    WHERE contact_id = loser_id
+  LOOP
+    SELECT id INTO winner_affiliation_id
+    FROM contact_companies
+    WHERE contact_id = winner_id
+      AND company_id = affiliation_record.company_id;
+
+    IF winner_affiliation_id IS NULL THEN
+      UPDATE contact_companies
+      SET contact_id = winner_id
+      WHERE id = affiliation_record.id;
+    ELSE
+      DELETE FROM contact_companies WHERE id = affiliation_record.id;
+    END IF;
+
+    winner_affiliation_id := NULL;
+  END LOOP;
 
   -- 3. Update deals - replace loser with winner in contact_ids array
   FOR deal_record IN

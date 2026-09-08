@@ -9,6 +9,7 @@ import {
   cleanupContactForEdit,
   defaultEmailJsonb,
   defaultPhoneJsonb,
+  normalizeContactCompanyAffiliations,
 } from "./contactModel";
 
 export const ContactEdit = ({
@@ -26,7 +27,7 @@ export const ContactEdit = ({
 );
 
 const normalizeContactArrayFields = (record: Contact) => ({
-  ...record,
+  ...normalizeContactCompanyAffiliations(record),
   email_jsonb:
     record.email_jsonb && record.email_jsonb.length > 0
       ? record.email_jsonb

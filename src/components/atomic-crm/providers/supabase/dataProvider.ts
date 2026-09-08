@@ -7,6 +7,8 @@ import {
   type ResourceCallbacks,
 } from "ra-core";
 import type {
+  Contact,
+  ContactCompany,
   ContactNote,
   Deal,
   DealNote,
@@ -15,6 +17,7 @@ import type {
   SalesFormData,
   SignUpData,
 } from "../../types";
+import { normalizeContactCompanyAffiliations } from "../../contacts/contactModel";
 import type { ConfigurationContextValue } from "../../root/ConfigurationContext";
 import { ATTACHMENTS_BUCKET } from "../commons/attachments";
 import { getIsInitialized } from "./authProvider";
@@ -47,14 +50,88 @@ const processCompanyLogo = async (params: any) => {
 const getDataProviderWithCustomMethods = () => {
   const baseDataProvider = getBaseDataProvider();
 
+  const syncContactCompanies = async (
+    contactId: Identifier,
+    affiliations: ContactCompany[],
+  ) => {
+    const client = getSupabaseClient();
+    const { error: deleteError } = await client
+      .from("contact_companies")
+      .delete()
+      .eq("contact_id", contactId);
+    if (deleteError) throw deleteError;
+
+    if (!affiliations.length) return;
+
+    const { error: insertError } = await client
+      .from("contact_companies")
+      .insert(
+        affiliations.map(({ company_id, start_date, end_date }) => ({
+          contact_id: contactId,
+          company_id,
+          start_date: start_date || null,
+          end_date: end_date || null,
+        })),
+      );
+    if (insertError) throw insertError;
+  };
+
+  const normalizeContactResult = (contact: Contact): Contact =>
+    normalizeContactCompanyAffiliations(contact);
+
   return {
     ...baseDataProvider,
+    async create(resource: string, params: any) {
+      if (resource !== "contacts") {
+        return baseDataProvider.create(resource, params);
+      }
+
+      const { company_affiliations = [], ...contactData } = params.data;
+      const result = await baseDataProvider.create(resource, {
+        ...params,
+        data: contactData,
+      });
+      await syncContactCompanies(result.data.id, company_affiliations);
+      return {
+        ...result,
+        data: { ...result.data, company_affiliations },
+      };
+    },
+    async update(resource: string, params: any) {
+      if (resource !== "contacts") {
+        return baseDataProvider.update(resource, params);
+      }
+
+      const hasAffiliations = "company_affiliations" in params.data;
+      const { company_affiliations, ...contactData } = params.data;
+      const result = await baseDataProvider.update(resource, {
+        ...params,
+        data: contactData,
+      });
+      if (hasAffiliations) {
+        await syncContactCompanies(result.data.id, company_affiliations ?? []);
+      }
+      return {
+        ...result,
+        data: {
+          ...result.data,
+          ...(hasAffiliations ? { company_affiliations } : {}),
+        },
+      };
+    },
     async getList(resource: string, params: GetListParams) {
       if (resource === "companies") {
         return baseDataProvider.getList("companies_summary", params);
       }
       if (resource === "contacts") {
-        return baseDataProvider.getList("contacts_summary", params);
+        const result = await baseDataProvider.getList<Contact>(
+          "contacts_summary",
+          params,
+        );
+        return {
+          ...result,
+          data: result.data.map(normalizeContactResult),
+        } as any;
       }
       if (resource === "activity_log") {
         const { data, total } = await baseDataProvider.getList(
@@ -81,7 +158,11 @@ const getDataProviderWithCustomMethods = () => {
         return baseDataProvider.getOne("companies_summary", params);
       }
       if (resource === "contacts") {
-        return baseDataProvider.getOne("contacts_summary", params);
+        const result = await baseDataProvider.getOne<Contact>(
+          "contacts_summary",
+          params,
+        );
+        return { ...result, data: normalizeContactResult(result.data) } as any;
       }
 
       return baseDataProvider.getOne(resource, params);
